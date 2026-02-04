@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   FileText,
   Briefcase,
+  Compass,
   ClipboardList,
   Bell,
 } from "lucide-react";
@@ -25,6 +26,7 @@ const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Resumes", href: "/resumes", icon: FileText },
   { title: "Jobs", href: "/jobs", icon: Briefcase },
+  { title: "Discover", href: "/discover", icon: Compass },
   { title: "Applications", href: "/applications", icon: ClipboardList },
   { title: "Reminders", href: "/reminders", icon: Bell },
 ];

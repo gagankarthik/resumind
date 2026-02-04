@@ -85,6 +85,18 @@ export interface Application {
   resume?: Resume;
 }
 
+export interface DiscoveredJob {
+  company: string;
+  role: string;
+  location: string;
+  salary_range: string;
+  match_score: number;
+  match_reasoning: string;
+  description: string;
+  search_url: string;
+  source: string;
+}
+
 export interface Reminder {
   id: string;
   user_id: string;

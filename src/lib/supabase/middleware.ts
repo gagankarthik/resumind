@@ -40,6 +40,7 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/dashboard") ||
     request.nextUrl.pathname.startsWith("/resumes") ||
     request.nextUrl.pathname.startsWith("/jobs") ||
+    request.nextUrl.pathname.startsWith("/discover") ||
     request.nextUrl.pathname.startsWith("/applications") ||
     request.nextUrl.pathname.startsWith("/reminders");
 
