@@ -13,6 +13,11 @@ export default async function DashboardPage() {
 
   if (!user) return null;
 
+  const firstName =
+    user.user_metadata?.full_name?.split(" ")[0] ||
+    user.email?.split("@")[0] ||
+    "there";
+
   const [
     { data: applications },
     { data: reminders },
@@ -33,15 +38,28 @@ export default async function DashboardPage() {
       .limit(5),
     supabase
       .from("parsed_skills")
-      .select("skill_name")
+      .select("skill_name, category")
       .eq("user_id", user.id),
   ]);
 
   const allApps = applications ?? [];
   const allReminders = reminders ?? [];
-  const allSkills = [...new Set((skills ?? []).map((s) => s.skill_name))];
 
-  // Compute stats from all applications (need full count)
+  // Deduplicate and group skills by category
+  const skillMap = new Map<string, string>();
+  for (const s of skills ?? []) {
+    if (!skillMap.has(s.skill_name)) {
+      skillMap.set(s.skill_name, s.category ?? "Other");
+    }
+  }
+  const categorizedSkills: Record<string, string[]> = {};
+  for (const [name, category] of skillMap) {
+    if (!categorizedSkills[category]) {
+      categorizedSkills[category] = [];
+    }
+    categorizedSkills[category].push(name);
+  }
+
   const { count: totalApps } = await supabase
     .from("applications")
     .select("*", { count: "exact", head: true })
@@ -69,6 +87,15 @@ export default async function DashboardPage() {
     <>
       <Topbar title="Dashboard" />
       <div className="p-6 space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Welcome back, {firstName}
+          </h2>
+          <p className="text-muted-foreground">
+            Here&apos;s an overview of your job search progress.
+          </p>
+        </div>
+
         <StatsCards
           stats={{
             totalApplications: totalApps ?? 0,
@@ -77,11 +104,19 @@ export default async function DashboardPage() {
             pendingReminders: reminderCount ?? 0,
           }}
         />
-        <div className="grid gap-6 md:grid-cols-2">
-          <RecentApplications applications={allApps} />
-          <UpcomingReminders reminders={allReminders} />
+
+        <div>
+          <h3 className="mb-3 text-lg font-semibold">Activity</h3>
+          <div className="grid gap-6 md:grid-cols-2">
+            <RecentApplications applications={allApps} />
+            <UpcomingReminders reminders={allReminders} />
+          </div>
         </div>
-        <SkillsOverview skills={allSkills} />
+
+        <div>
+          <h3 className="mb-3 text-lg font-semibold">Skills Profile</h3>
+          <SkillsOverview skillsByCategory={categorizedSkills} />
+        </div>
       </div>
     </>
   );

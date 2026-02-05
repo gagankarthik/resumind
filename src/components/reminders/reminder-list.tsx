@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -9,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Trash2, CalendarDays } from "lucide-react";
+import { Trash2, CalendarDays, Bell, Loader2 } from "lucide-react";
 import type { Reminder } from "@/types/database";
 import { toggleReminder, deleteReminder } from "@/actions/reminders";
 import { toast } from "sonner";
@@ -18,6 +19,8 @@ import { format, isPast, isToday } from "date-fns";
 
 export function ReminderList({ reminders }: { reminders: Reminder[] }) {
   const router = useRouter();
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function handleToggle(id: string, checked: boolean) {
     const result = await toggleReminder(id, checked);
@@ -26,7 +29,14 @@ export function ReminderList({ reminders }: { reminders: Reminder[] }) {
   }
 
   async function handleDelete(id: string) {
+    if (confirmId !== id) {
+      setConfirmId(id);
+      return;
+    }
+    setDeletingId(id);
     const result = await deleteReminder(id);
+    setDeletingId(null);
+    setConfirmId(null);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -37,9 +47,15 @@ export function ReminderList({ reminders }: { reminders: Reminder[] }) {
 
   if (reminders.length === 0) {
     return (
-      <p className="text-center text-muted-foreground py-8">
-        No reminders yet. Add one to stay on track.
-      </p>
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
+        <Bell className="mb-3 size-10 text-muted-foreground/40" />
+        <p className="text-sm font-medium text-muted-foreground">
+          No reminders yet
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Add one to stay on track with your applications.
+        </p>
+      </div>
     );
   }
 
@@ -47,12 +63,15 @@ export function ReminderList({ reminders }: { reminders: Reminder[] }) {
     <div className="space-y-3">
       {reminders.map((reminder) => {
         const dueDate = new Date(reminder.due_date);
-        const overdue = isPast(dueDate) && !isToday(dueDate) && !reminder.is_completed;
+        const overdue =
+          isPast(dueDate) && !isToday(dueDate) && !reminder.is_completed;
 
         return (
           <Card
             key={reminder.id}
-            className={reminder.is_completed ? "opacity-60" : ""}
+            className={`transition-all ${
+              reminder.is_completed ? "opacity-60" : ""
+            } ${overdue ? "border-l-4 border-l-destructive" : ""}`}
           >
             <CardHeader className="pb-2">
               <div className="flex items-start gap-3">
@@ -63,9 +82,9 @@ export function ReminderList({ reminders }: { reminders: Reminder[] }) {
                   }
                   className="mt-1"
                 />
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <CardTitle
-                    className={`text-base ${reminder.is_completed ? "line-through" : ""}`}
+                    className={`text-base ${reminder.is_completed ? "line-through text-muted-foreground" : ""}`}
                   >
                     {reminder.title}
                   </CardTitle>
@@ -74,18 +93,30 @@ export function ReminderList({ reminders }: { reminders: Reminder[] }) {
                   )}
                 </div>
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant={confirmId === reminder.id ? "destructive" : "ghost"}
+                  size={confirmId === reminder.id ? "sm" : "icon"}
                   onClick={() => handleDelete(reminder.id)}
+                  onBlur={() => setConfirmId(null)}
+                  disabled={deletingId === reminder.id}
                 >
-                  <Trash2 className="size-4 text-destructive" />
+                  {deletingId === reminder.id ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : confirmId === reminder.id ? (
+                    "Confirm"
+                  ) : (
+                    <Trash2 className="size-4 text-destructive" />
+                  )}
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="pt-0 pl-10">
               <div className="flex items-center gap-4 text-sm">
                 <span
-                  className={`flex items-center gap-1 ${overdue ? "text-destructive font-medium" : "text-muted-foreground"}`}
+                  className={`flex items-center gap-1 ${
+                    overdue
+                      ? "text-destructive font-medium"
+                      : "text-muted-foreground"
+                  }`}
                 >
                   <CalendarDays className="size-3" />
                   {overdue ? "Overdue: " : ""}

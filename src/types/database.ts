@@ -16,6 +16,11 @@ export interface Resume {
   created_at: string;
 }
 
+export interface CategorizedSkill {
+  name: string;
+  category: string;
+}
+
 export interface ParsedResumeData {
   name: string | null;
   email: string | null;
@@ -23,7 +28,7 @@ export interface ParsedResumeData {
   summary: string | null;
   experience: WorkExperience[];
   education: Education[];
-  skills: string[];
+  skills: string[] | CategorizedSkill[];
 }
 
 export interface WorkExperience {

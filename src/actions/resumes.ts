@@ -55,3 +55,29 @@ export async function deleteResume(resumeId: string) {
   revalidatePath("/resumes");
   return { success: true };
 }
+
+export async function getResumeDownloadUrl(resumeId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Unauthorized" };
+
+  const { data: resume } = await supabase
+    .from("resumes")
+    .select("file_path, file_name")
+    .eq("id", resumeId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!resume?.file_path) return { error: "Resume not found" };
+
+  const { data, error } = await supabase.storage
+    .from("resumes")
+    .createSignedUrl(resume.file_path, 60);
+
+  if (error) return { error: error.message };
+
+  return { url: data.signedUrl, fileName: resume.file_name };
+}

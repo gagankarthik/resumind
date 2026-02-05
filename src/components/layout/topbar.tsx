@@ -9,11 +9,22 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { User, LogOut } from "lucide-react";
+import { useUser } from "@/hooks/use-user";
 
 export function Topbar({ title }: { title: string }) {
+  const { user } = useUser();
+
+  const displayName =
+    user?.user_metadata?.full_name ||
+    user?.email?.split("@")[0] ||
+    "";
+  const initial = displayName ? displayName.charAt(0).toUpperCase() : "U";
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-background px-4">
       <SidebarTrigger />
@@ -23,11 +34,34 @@ export function Topbar({ title }: { title: string }) {
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <User className="size-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative size-8 rounded-full"
+            >
+              <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                {initial}
+              </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-56">
+            {user && (
+              <>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    {displayName && (
+                      <p className="text-sm font-medium">{displayName}</p>
+                    )}
+                    {user.email && (
+                      <p className="text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
+                    )}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem
               onClick={() => logout()}
               className="cursor-pointer"

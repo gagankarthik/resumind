@@ -74,8 +74,17 @@ export async function POST(request: Request) {
   "summary": string or null (brief professional summary),
   "experience": [{"title": string, "company": string, "duration": string, "description": string}],
   "education": [{"degree": string, "institution": string, "year": string}],
-  "skills": [string] (list of technical and soft skills)
-}`,
+  "skills": [{"name": string, "category": string}]
+}
+
+For skills, categorize each skill into one of these categories:
+- "Languages" (programming languages like JavaScript, Python, Java, etc.)
+- "Frameworks" (React, Angular, Django, Spring, etc.)
+- "Databases" (PostgreSQL, MongoDB, Redis, etc.)
+- "Cloud & DevOps" (AWS, Docker, Kubernetes, CI/CD, etc.)
+- "Tools" (Git, Jira, Figma, VS Code, etc.)
+- "Soft Skills" (Leadership, Communication, Teamwork, etc.)
+- "Other" (anything that doesn't fit above)`,
         },
         {
           role: "user",
@@ -108,13 +117,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Save parsed skills
+    // Save parsed skills with categories
     if (parsedData.skills && parsedData.skills.length > 0) {
-      const skills = parsedData.skills.map((skill: string) => ({
-        resume_id: resume.id,
-        user_id: user.id,
-        skill_name: skill,
-      }));
+      const skills = parsedData.skills.map(
+        (skill: string | { name: string; category: string }) => ({
+          resume_id: resume.id,
+          user_id: user.id,
+          skill_name: typeof skill === "string" ? skill : skill.name,
+          category: typeof skill === "string" ? null : skill.category,
+        })
+      );
 
       await supabase.from("parsed_skills").insert(skills);
     }
